@@ -10,9 +10,13 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
+- script: which go
 - task: GoTool@0
   inputs:
     version: '1.14'
+
+- script: which go
+
 - task: Go@0
   inputs:
     command: 'get'
