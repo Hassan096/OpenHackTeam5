@@ -13,7 +13,10 @@ steps:
 - script: which go
 - task: GoTool@0
 
-- script: which go
+- script: 
+    which go
+    pwd
+    ls /opt/hostedtoolcache/go/
 
 - task: Go@0
   inputs:
