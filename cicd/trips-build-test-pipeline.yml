@@ -16,3 +16,10 @@ steps:
 - task: Go@0
   inputs:
     command: 'get'
+    workingDirectory: '/apis/trips/'
+
+- task: Go@0
+  inputs:
+    command: 'test'
+    workingDirectory: '/apis/trips/tests'
+    arguments: -v 
