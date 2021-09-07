@@ -68,3 +68,22 @@ stages:
         env: 
           AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
         displayName: 'Create work item on failure'   
+
+- stage: Deploy
+  displayName: Deploy new User Profile App
+  jobs:
+  - job: Update Staging App
+    displayName: Build User profile
+    steps:
+    - task: AzureRmWebAppDeployment@4
+      inputs:
+        ConnectionType: 'AzureRM'
+        azureSubscription: 'appServiceSubsciptionConnection'
+        appType: 'webAppContainer'
+        WebAppName: 'openhackxhg88362userprofile'
+        deployToSlotOrASE: true
+        ResourceGroupName: 'openhackxhg88362rg'
+        SlotName: 'staging'
+        DockerNamespace: 'devopsoh/api-userprofile:$(Build.BuildId)'
+        DockerRepository: 'devopsoh/api-userprofile:$(Build.BuildId)'
+        DockerImageTag: '$(Build.BuildId)'
