@@ -80,7 +80,7 @@ stages:
   displayName: Deploy App
   jobs:
   - job: Staging
-    displayName: Build User profile
+    displayName: Deploy User profile on Stage
     steps:
     - task: AzureRmWebAppDeployment@4
       inputs:
@@ -94,3 +94,18 @@ stages:
         DockerNamespace: 'openhackxhg88362acr.azurecr.io'
         DockerRepository: 'devopsoh/api-userprofile'
         DockerImageTag: '$(Build.BuildId)'
+
+- stage:
+  condition: and(succeeded(), eq(variables.isMain, 'true'))
+  displayName: Deploy App on Prod
+  jobs:
+  - job: Prod
+    displayName: Deploy User profile on Prod
+    steps:
+    - task: AzureAppServiceManage@0
+      inputs:
+        azureSubscription: 'appServiceSubsciptionConnection'
+        Action: 'Swap Slots'
+        WebAppName: 'openhackxhg88362userprofile'
+        ResourceGroupName: 'openhackxhg88362rg'
+        SourceSlot: 'staging'
