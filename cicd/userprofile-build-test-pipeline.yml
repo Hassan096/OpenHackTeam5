@@ -10,7 +10,8 @@ trigger:
   paths:
     include:
     - 'apis/userprofile/*'
-    
+    - 'cicd/userprofile-build-test-pipeline.yml'
+
 pr:
   branches:
     include:
