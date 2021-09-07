@@ -34,4 +34,3 @@ steps:
     repository: 'devopsoh/api-userprofile'
     command: 'buildAndPush'
     Dockerfile: 'apis/userprofile/Dockerfile'
-    buildContext: 'apis/userprofile/**'
