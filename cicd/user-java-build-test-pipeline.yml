@@ -8,6 +8,15 @@ trigger:
     include:
     - 'apis/user-java/*'
 
+pr:
+  branches:
+    include:
+    - main
+  paths:
+    include:
+    - 'apis/user-java/*'
+    - 'cicd/user-java-build-test-pipeline.yml'
+
 pool:
   vmImage: ubuntu-latest
 
