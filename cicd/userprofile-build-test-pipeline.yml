@@ -91,6 +91,6 @@ stages:
         deployToSlotOrASE: true
         ResourceGroupName: 'openhackxhg88362rg'
         SlotName: 'staging'
-        DockerNamespace: 'devopsoh/api-userprofile:$(Build.BuildId)'
-        DockerRepository: 'devopsoh/api-userprofile:$(Build.BuildId)'
+        DockerNamespace: 'devopsoh'
+        DockerRepository: 'api-userprofile'
         DockerImageTag: '$(Build.BuildId)'
