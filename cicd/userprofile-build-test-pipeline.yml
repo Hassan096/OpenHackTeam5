@@ -51,3 +51,18 @@ stages:
           repository: 'devopsoh/api-userprofile'
           command: 'buildAndPush'
           Dockerfile: 'apis/userprofile/Dockerfile'
+          addBaseImageData:
+
+    - job: ErrorHandler
+      dependsOn: Userprofile
+      condition: failed()
+      steps: 
+      - bash: |
+          az boards work-item create \
+            --title "Build $(build.buildNumber) failed" \
+            --type bug \
+            --org $(System.TeamFoundationCollectionUri) \
+            --project $(System.TeamProject)
+        env: 
+          AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
+        displayName: 'Create work item on failure'   
