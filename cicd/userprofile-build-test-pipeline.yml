@@ -25,7 +25,7 @@ steps:
     customCommand: 'run test'
 - task: Docker@2
   inputs:
-    container: 'azureOpenHackRegistryServiceConnection1'
+    containerRegistry: 'azureOpenHackRegistryServiceConnection1'
     command: 'login'
 
 - task: Docker@2
