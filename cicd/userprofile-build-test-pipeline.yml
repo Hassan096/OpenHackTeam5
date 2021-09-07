@@ -20,6 +20,9 @@ pr:
     - 'apis/userprofile/*'
     - 'cicd/userprofile-build-test-pipeline.yml'
 
+variables:
+  isMain: $[eq(variables['Build.SourceBranch'], 'refs/heads/main')]
+
 pool:
   vmImage: ubuntu-latest
 
@@ -44,11 +47,13 @@ stages:
           workingDir: 'apis/userprofile'
           customCommand: 'run test'
       - task: Docker@2
+        condition: and(succeeded(), eq(variables.isMain, 'true'))
         inputs:
           containerRegistry: 'azureOpenHackRegistryServiceConnection1'
           command: 'login'
 
       - task: Docker@2
+        condition: and(succeeded(), eq(variables.isMain, 'true'))
         inputs:
           containerRegistry: 'azureOpenHackRegistryServiceConnection1'
           repository: 'devopsoh/api-userprofile'
@@ -69,7 +74,8 @@ stages:
           AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
         displayName: 'Create work item on failure'   
 
-- stage: Deploy
+- stage:
+  condition: and(succeeded(), eq(variables.isMain, 'true'))
   displayName: Deploy App
   jobs:
   - job: Staging
