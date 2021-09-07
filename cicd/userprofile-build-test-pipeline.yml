@@ -51,7 +51,6 @@ stages:
           repository: 'devopsoh/api-userprofile'
           command: 'buildAndPush'
           Dockerfile: 'apis/userprofile/Dockerfile'
-          addBaseImageData:
 
     - job: ErrorHandler
       dependsOn: Userprofile
