@@ -20,28 +20,34 @@ pr:
 pool:
   vmImage: ubuntu-latest
 
-steps:
-- task: NodeTool@0
-  inputs:
-    versionSpec: '10.x'
-  displayName: 'Install Node.js'
-- task: Npm@1
-  inputs:
-    command: 'install'
-    workingDir: 'apis/userprofile'
-- task: Npm@1
-  inputs:
-    command: 'custom'
-    workingDir: 'apis/userprofile'
-    customCommand: 'run test'
-- task: Docker@2
-  inputs:
-    containerRegistry: 'azureOpenHackRegistryServiceConnection1'
-    command: 'login'
+stages:
+- stage: Build
+  displayName: Build User Profile
+  jobs:
+    - job: Userprofile
+      displayName: Build User profile
+      steps:
+      - task: NodeTool@0
+        inputs:
+          versionSpec: '10.x'
+        displayName: 'Install Node.js'
+      - task: Npm@1
+        inputs:
+          command: 'install'
+          workingDir: 'apis/userprofile'
+      - task: Npm@1
+        inputs:
+          command: 'custom'
+          workingDir: 'apis/userprofile'
+          customCommand: 'run test'
+      - task: Docker@2
+        inputs:
+          containerRegistry: 'azureOpenHackRegistryServiceConnection1'
+          command: 'login'
 
-- task: Docker@2
-  inputs:
-    containerRegistry: 'azureOpenHackRegistryServiceConnection1'
-    repository: 'devopsoh/api-userprofile'
-    command: 'buildAndPush'
-    Dockerfile: 'apis/userprofile/Dockerfile'
+      - task: Docker@2
+        inputs:
+          containerRegistry: 'azureOpenHackRegistryServiceConnection1'
+          repository: 'devopsoh/api-userprofile'
+          command: 'buildAndPush'
+          Dockerfile: 'apis/userprofile/Dockerfile'
