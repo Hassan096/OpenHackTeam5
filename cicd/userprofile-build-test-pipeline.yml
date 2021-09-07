@@ -70,9 +70,9 @@ stages:
         displayName: 'Create work item on failure'   
 
 - stage: Deploy
-  displayName: Deploy new User Profile App
+  displayName: Deploy App
   jobs:
-  - job: Update Staging App
+  - job: Staging
     displayName: Build User profile
     steps:
     - task: AzureRmWebAppDeployment@4
