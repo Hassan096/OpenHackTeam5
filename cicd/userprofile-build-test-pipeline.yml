@@ -18,8 +18,8 @@ steps:
   inputs:
     command: 'install'
     workingDir: 'apis/userprofile'
-- script: |
-    cd apis/userprofile/
-    npm install
-    npm run build
-  displayName: 'npm install and build'
+- task: Npm@1
+  inputs:
+    command: 'custom'
+    workingDir: 'apis/userprofile'
+    customCommand: 'run test'
