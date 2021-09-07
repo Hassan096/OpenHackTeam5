@@ -4,7 +4,9 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/go
 
 trigger:
-- main
+  paths:
+    include:
+      - apis/trips
 
 pool:
   vmImage: ubuntu-latest
