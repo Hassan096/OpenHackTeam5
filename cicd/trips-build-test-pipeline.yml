@@ -8,7 +8,16 @@ trigger:
     include:
     - 'apis/trips/*'
     - 'cicd/trips-build-test-pipeline.yml'
-
+    
+  pr:
+    branches:
+      include:
+      - main
+    paths:
+      include:
+      - 'apis/trips/*'
+      - 'cicd/trips-build-test-pipeline.yml'
+      
 pool:
   vmImage: ubuntu-latest
 steps:
