@@ -7,26 +7,19 @@ trigger:
   paths:
     include:
     - 'apis/trips/*'
+    - 'cicd/trips-build-test-pipeline.yml'
 
 pool:
   vmImage: ubuntu-latest
-
 steps:
-- script: which go
-- task: GoTool@0
+  - task: Docker@2
+    inputs:
+      containerRegistry: 'azureOpenHackRegistryServiceConnection1'
+      command: 'login'
 
-- script: 
-    which go
-    pwd
-    ls /opt/hostedtoolcache/go/
-
-- task: Go@0
-  inputs:
-    command: 'get'
-    workingDirectory: '/apis/trips/'
-
-- task: Go@0
-  inputs:
-    command: 'test'
-    workingDirectory: '/apis/trips/tests'
-    arguments: -v 
+  - task: Docker@2
+    inputs:
+      containerRegistry: 'azureOpenHackRegistryServiceConnection1'
+      repository: 'devopsoh/api-trips'
+      command: 'buildAndPush'
+      Dockerfile: 'apis/trips/Dockerfile'
