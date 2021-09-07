@@ -7,6 +7,15 @@ trigger:
   paths:
     include:
     - 'apis/userprofile/*'
+    
+pr:
+  branches:
+    include:
+    - main
+  paths:
+    include:
+    - 'apis/userprofile/*'
+    - 'cicd/userprofile-build-test-pipeline.yml'
 
 pool:
   vmImage: ubuntu-latest
