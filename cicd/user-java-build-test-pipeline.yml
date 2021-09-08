@@ -29,10 +29,10 @@ pool:
 
 stages:
 - stage: Build
-  displayName: Build User Profile
+  displayName: Build User Java Container Image
   jobs:
-    - job: Userprofile
-      displayName: Build User profile
+    - job: Userjava
+      displayName: Build User Java App
       steps:
       - task: Docker@2
         condition: and(succeeded(), eq(variables.isMain, 'true'))
@@ -49,7 +49,7 @@ stages:
           Dockerfile: 'apis/user-java/Dockerfile'
 
     - job: ErrorHandler
-      dependsOn: Userprofile
+      dependsOn: Userjava
       condition: failed()
       steps: 
       - bash: |
@@ -74,7 +74,7 @@ stages:
         ConnectionType: 'AzureRM'
         azureSubscription: 'appServiceSubsciptionConnection'
         appType: 'webAppContainer'
-        WebAppName: 'openhackxhg88362userprofile'
+        WebAppName: 'openhackxhg88362userjava'
         deployToSlotOrASE: true
         ResourceGroupName: 'openhackxhg88362rg'
         SlotName: 'staging'
@@ -82,17 +82,44 @@ stages:
         DockerRepository: 'devopsoh/api-user-java'
         DockerImageTag: '$(Build.BuildId)'
 
+  - job: HealthCheckStaging
+    dependsOn: Staging
+    displayName: Health Check on Staging
+    steps: 
+    - task: Bash@3
+      inputs:
+        filePath: 'polling.sh'
+        arguments: 'https://openhackxhg88362userjava-staging.azurewebsites.net/api/healthcheck/user'
+
 - stage:
   condition: and(succeeded(), eq(variables.isMain, 'true'))
   displayName: Deploy Java App on Prod
   jobs:
   - job: Prod
-    displayName: Deploy User profile on Prod
+    displayName: Deploy User Java on Prod
     steps:
     - task: AzureAppServiceManage@0
       inputs:
         azureSubscription: 'appServiceSubsciptionConnection'
         Action: 'Swap Slots'
-        WebAppName: 'openhackxhg88362userprofile'
+        WebAppName: 'openhackxhg88362userjava'
+        ResourceGroupName: 'openhackxhg88362rg'
+        SourceSlot: 'staging'
+
+  - job: HealthCheckProd
+    dependsOn: Prod
+    displayName: Health Check on Prod
+    steps: 
+    - task: Bash@3
+      inputs:
+        filePath: 'polling.sh'
+        arguments: 'https://openhackxhg88362userjava.azurewebsites.net/api/healthcheck/user'
+    - task: AzureAppServiceManage@0
+      displayName: Rollback to Staging
+      condition: failed()
+      inputs:
+        azureSubscription: 'appServiceSubsciptionConnection'
+        Action: 'Swap Slots'
+        WebAppName: 'openhackxhg88362userjava'
         ResourceGroupName: 'openhackxhg88362rg'
         SourceSlot: 'staging'
