@@ -5,7 +5,7 @@ declare hasUrl=""
 declare endpoint
 declare -i status200count=0
 
-endpoint="https://openhackxhg88362userprofile-staging.azurewebsites.net/api/healthcheck/user"
+endpoint=$1
 
 healthcheck() {
     declare url=$1
