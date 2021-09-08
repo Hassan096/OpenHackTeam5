@@ -10,6 +10,7 @@ trigger:
   paths:
     include:
     - 'apis/user-java/*'
+    - 'cicd/user-java-build-test-pipeline.yml'
 
 pr:
   branches:
@@ -20,19 +21,78 @@ pr:
     - 'apis/user-java/*'
     - 'cicd/user-java-build-test-pipeline.yml'
 
+variables:
+  isMain: $[eq(variables['Build.SourceBranch'], 'refs/heads/main')]
+
 pool:
   vmImage: ubuntu-latest
 
-steps:
+stages:
+- stage: Build
+  displayName: Build User Profile
+  jobs:
+    - job: Userprofile
+      displayName: Build User profile
+      steps:
+      - task: Docker@2
+        condition: and(succeeded(), eq(variables.isMain, 'true'))
+        inputs:
+          containerRegistry: 'azureOpenHackRegistryServiceConnection1'
+          command: 'login'
 
-- task: Docker@2
-  inputs:
-    containerRegistry: 'azureOpenHackRegistryServiceConnection1'
-    command: 'login'
+      - task: Docker@2
+        condition: and(succeeded(), eq(variables.isMain, 'true'))
+        inputs:
+          containerRegistry: 'azureOpenHackRegistryServiceConnection1'
+          repository: 'devopsoh/api-user-java'
+          command: 'buildAndPush'
+          Dockerfile: 'apis/user-java/Dockerfile'
 
-- task: Docker@2
-  inputs:
-    containerRegistry: 'azureOpenHackRegistryServiceConnection1'
-    repository: 'devopsoh/api-user-java'
-    command: 'buildAndPush'
-    Dockerfile: 'apis/user-java/Dockerfile'
+    - job: ErrorHandler
+      dependsOn: Userprofile
+      condition: failed()
+      steps: 
+      - bash: |
+          az boards work-item create \
+            --title "Build $(build.buildNumber) failed" \
+            --type issue \
+            --org $(System.TeamFoundationCollectionUri) \
+            --project $(System.TeamProject)
+        env: 
+          AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
+        displayName: 'Create work item on failure'   
+
+- stage:
+  condition: and(succeeded(), eq(variables.isMain, 'true'))
+  displayName: Deploy Java App on Staging
+  jobs:
+  - job: Staging
+    displayName: Deploy User Java on Stage
+    steps:
+    - task: AzureRmWebAppDeployment@4
+      inputs:
+        ConnectionType: 'AzureRM'
+        azureSubscription: 'appServiceSubsciptionConnection'
+        appType: 'webAppContainer'
+        WebAppName: 'openhackxhg88362userprofile'
+        deployToSlotOrASE: true
+        ResourceGroupName: 'openhackxhg88362rg'
+        SlotName: 'staging'
+        DockerNamespace: 'openhackxhg88362acr.azurecr.io'
+        DockerRepository: 'devopsoh/api-user-java'
+        DockerImageTag: '$(Build.BuildId)'
+
+- stage:
+  condition: and(succeeded(), eq(variables.isMain, 'true'))
+  displayName: Deploy Java App on Prod
+  jobs:
+  - job: Prod
+    displayName: Deploy User profile on Prod
+    steps:
+    - task: AzureAppServiceManage@0
+      inputs:
+        azureSubscription: 'appServiceSubsciptionConnection'
+        Action: 'Swap Slots'
+        WebAppName: 'openhackxhg88362userprofile'
+        ResourceGroupName: 'openhackxhg88362rg'
+        SourceSlot: 'staging'
