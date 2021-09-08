@@ -131,6 +131,7 @@ stages:
         filePath: 'polling.sh'
         arguments: 'https://openhackxhg88362userprofile.azurewebsites.net/api/healthcheck/user'
     - task: AzureAppServiceManage@0
+      displayName: Rollback to Staging
       condition: failed()
       inputs:
         azureSubscription: 'appServiceSubsciptionConnection'
