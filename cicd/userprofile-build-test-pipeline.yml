@@ -97,7 +97,7 @@ stages:
         DockerRepository: 'devopsoh/api-userprofile'
         DockerImageTag: '$(Build.BuildId)'
   
-  - job: HealthCheck
+  - job: HealthCheckStaging
     dependsOn: Staging
     displayName: Health Check on Staging
     steps: 
@@ -121,3 +121,21 @@ stages:
         WebAppName: 'openhackxhg88362userprofile'
         ResourceGroupName: 'openhackxhg88362rg'
         SourceSlot: 'staging'
+
+  - job: HealthCheckProd
+    dependsOn: Prod
+    displayName: Health Check on Prod
+    steps: 
+    - task: Bash@3
+      inputs:
+        filePath: 'polling.sh'
+        arguments: 'https://openhackxhg88362userprofile.azurewebsites.net/api/healthcheck/user'
+    - task: AzureAppServiceManage@0
+      condition: failed()
+      inputs:
+        azureSubscription: 'appServiceSubsciptionConnection'
+        Action: 'Swap Slots'
+        WebAppName: 'openhackxhg88362userprofile'
+        ResourceGroupName: 'openhackxhg88362rg'
+        SourceSlot: 'staging'
+        
