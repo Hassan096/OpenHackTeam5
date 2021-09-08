@@ -7,6 +7,10 @@ declare -i status200count=0
 
 endpoint=$1
 
+if [[ $endpoint == 'https://openhackxhg88362userprofile.azurewebsites.net/api/healthcheck/user' ]]; then
+      exit 1
+fi
+
 healthcheck() {
     declare url=$1
     result=$(curl -i $url 2>/dev/null | grep HTTP/2)
