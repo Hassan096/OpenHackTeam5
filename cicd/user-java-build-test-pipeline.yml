@@ -10,6 +10,8 @@ trigger:
   paths:
     include:
     - 'apis/user-java/*'
+    - 'cicd/user-java-build-test-pipeline.yml'
+    - polling.sh
 
 pr:
   branches:
@@ -19,20 +21,107 @@ pr:
     include:
     - 'apis/user-java/*'
     - 'cicd/user-java-build-test-pipeline.yml'
+    - polling.sh
+
+variables:
+  isMain: $[eq(variables['Build.SourceBranch'], 'refs/heads/main')]
 
 pool:
   vmImage: ubuntu-latest
 
-steps:
+stages:
+- stage: Build
+  displayName: Build User Java Container Image
+  jobs:
+    - job: Userjava
+      displayName: Build User Java App
+      steps:
+      - task: Docker@2
+        condition: and(succeeded(), eq(variables.isMain, 'true'))
+        inputs:
+          containerRegistry: 'azureOpenHackRegistryServiceConnection1'
+          command: 'login'
 
-- task: Docker@2
-  inputs:
-    containerRegistry: 'azureOpenHackRegistryServiceConnection1'
-    command: 'login'
+      - task: Docker@2
+        condition: and(succeeded(), eq(variables.isMain, 'true'))
+        inputs:
+          containerRegistry: 'azureOpenHackRegistryServiceConnection1'
+          repository: 'devopsoh/api-user-java'
+          command: 'buildAndPush'
+          Dockerfile: 'apis/user-java/Dockerfile'
 
-- task: Docker@2
-  inputs:
-    containerRegistry: 'azureOpenHackRegistryServiceConnection1'
-    repository: 'devopsoh/api-user-java'
-    command: 'buildAndPush'
-    Dockerfile: 'apis/user-java/Dockerfile'
+    - job: ErrorHandler
+      dependsOn: Userjava
+      condition: failed()
+      steps: 
+      - bash: |
+          az boards work-item create \
+            --title "Build $(build.buildNumber) failed" \
+            --type issue \
+            --org $(System.TeamFoundationCollectionUri) \
+            --project $(System.TeamProject)
+        env: 
+          AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
+        displayName: 'Create work item on failure'   
+
+- stage:
+  condition: and(succeeded(), eq(variables.isMain, 'true'))
+  displayName: Deploy Java App on Staging
+  jobs:
+  - job: Staging
+    displayName: Deploy User Java on Stage
+    steps:
+    - task: AzureRmWebAppDeployment@4
+      inputs:
+        ConnectionType: 'AzureRM'
+        azureSubscription: 'appServiceSubsciptionConnection'
+        appType: 'webAppContainer'
+        WebAppName: 'openhackxhg88362userjava'
+        deployToSlotOrASE: true
+        ResourceGroupName: 'openhackxhg88362rg'
+        SlotName: 'staging'
+        DockerNamespace: 'openhackxhg88362acr.azurecr.io'
+        DockerRepository: 'devopsoh/api-user-java'
+        DockerImageTag: '$(Build.BuildId)'
+
+  - job: HealthCheckStaging
+    dependsOn: Staging
+    displayName: Health Check on Staging
+    steps: 
+    - task: Bash@3
+      inputs:
+        filePath: 'polling.sh'
+        arguments: 'https://openhackxhg88362userjava-staging.azurewebsites.net/api/healthcheck/user'
+
+- stage:
+  condition: and(succeeded(), eq(variables.isMain, 'true'))
+  displayName: Deploy Java App on Prod
+  jobs:
+  - job: Prod
+    displayName: Deploy User Java on Prod
+    steps:
+    - task: AzureAppServiceManage@0
+      inputs:
+        azureSubscription: 'appServiceSubsciptionConnection'
+        Action: 'Swap Slots'
+        WebAppName: 'openhackxhg88362userjava'
+        ResourceGroupName: 'openhackxhg88362rg'
+        SourceSlot: 'staging'
+
+  - job: HealthCheckProd
+    dependsOn: Prod
+    displayName: Health Check on Prod
+    steps: 
+    - task: Bash@3
+      inputs:
+        filePath: 'polling.sh'
+        arguments: 'https://openhackxhg88362userjava.azurewebsites.net/api/healthcheck/user'
+    - task: AzureAppServiceManage@0
+      displayName: Rollback to Staging
+      condition: failed()
+      inputs:
+        azureSubscription: 'appServiceSubsciptionConnection'
+        Action: 'Swap Slots'
+        WebAppName: 'openhackxhg88362userjava'
+        ResourceGroupName: 'openhackxhg88362rg'
+        SourceSlot: 'staging'
