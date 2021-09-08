@@ -77,7 +77,7 @@ stages:
 
 - stage:
   condition: and(succeeded(), eq(variables.isMain, 'true'))
-  displayName: Deploy App
+  displayName: Deploy App to Staging
   jobs:
   - job: Staging
     displayName: Deploy User profile on Stage
@@ -94,6 +94,16 @@ stages:
         DockerNamespace: 'openhackxhg88362acr.azurecr.io'
         DockerRepository: 'devopsoh/api-userprofile'
         DockerImageTag: '$(Build.BuildId)'
+  
+  - job: HealthCheck
+    dependsOn: Staging
+    displayName: Health Check on Staging
+    steps: 
+    - task: Bash@3
+      inputs:
+        filePath: 'polling.sh'
+        arguments: 'https://openhackxhg88362userprofile-staging.azurewebsites.net/api/healthcheck/user'
+
 
 - stage:
   condition: and(succeeded(), eq(variables.isMain, 'true'))
