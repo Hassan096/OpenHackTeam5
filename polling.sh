@@ -1,6 +1,5 @@
 #!/bin/bash
 
-exit 1
 declare -i duration=4
 declare hasUrl=""
 declare endpoint
